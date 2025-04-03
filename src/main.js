@@ -731,7 +731,6 @@ function init() {
     leftJoystick.on('move', function (evt, data) {
       if (!data) return;
       const angle = data.angle.degree;
-      const distance = data.distance;
       keys.forward = angle > 45 && angle < 135;
       keys.backward = angle > 225 && angle < 315;
       keys.left = angle > 135 && angle < 225;
@@ -746,12 +745,12 @@ function init() {
       if (!data) return;
       const force = data.force;
       const angle = data.angle.radian;
-      const deltaX = Math.cos(angle) * force * 0.05;
-      const deltaY = Math.sin(angle) * force * 0.05;
-      euler.y -= deltaX;
-      euler.x -= deltaY;
-      euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
-      camera.rotation.copy(euler);
+      lookDelta.x = Math.cos(angle) * force * 0.05;
+      lookDelta.y = Math.sin(angle) * force * 0.05;
+    });
+
+    rightJoystick.on('end', function () {
+      lookDelta.set(0, 0);
     });
   }
   // Teleport functionality remains unchanged
@@ -879,6 +878,10 @@ function init() {
     updatePlayerMovement();
     scrollingTextures.forEach(tex => tex.offset.y += 0.0005);
     animategrass(time);
+    euler.y -= lookDelta.x;
+    euler.x -= lookDelta.y;
+    euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+    camera.rotation.copy(euler);
 
    // === Color cycle each light ===
    pointLights.forEach((light, i) => {
