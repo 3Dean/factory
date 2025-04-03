@@ -20,7 +20,7 @@ function init() {
   let pointLights = [];
   let hues = [];
 
-  const playerHeight = 1.7;
+  const playerHeight = 1.9;
   const playerRadius = 0.25;
   const moveSpeed = 0.1;
   let velocity = new THREE.Vector3();
@@ -168,7 +168,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.toneMapping = ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.11;
+    renderer.toneMappingExposure = .2;
     renderer.outputColorSpace = SRGBColorSpace;
     ColorManagement.enabled = true;
     stats = new Stats();
