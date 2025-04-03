@@ -1,9 +1,11 @@
-* {
+*{
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
+html, body {
+  touch-action: none; /* Prevents browser gestures like pinch-zoom or double-tap */
+}
 body { 
   margin: 0; 
   overflow: hidden; 
@@ -109,10 +111,31 @@ canvas {
     background: rgba(0, 0, 0, 0.5);
     padding: 8px 12px;
     border-radius: 5px;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
     text-align: center;
     pointer-events: none;
     text-shadow: 1px 1px 2px black;
     display: block;
   }
+  .thumbstick-zone {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    z-index: 10;
+    touch-action: none; /* Prevent default browser gestures */
+    user-select: none;
+  }
+  
+  #left-thumbstick {
+    bottom: 60px;
+    left: 30px;
+  }
+  
+  #right-thumbstick {
+    bottom: 60px;
+    right: 30px;
+  }
+  
  }

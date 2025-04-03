@@ -656,6 +656,10 @@ function init() {
       // Initialize mobile touch controls
       setupMobileControls();
       // Optionally display mobile instructions (already in HTML/CSS)
+      // Prevent pinch-to-zoom and double-tap zoom
+      document.addEventListener("gesturestart", (e) => e.preventDefault());
+      document.addEventListener("gesturechange", (e) => e.preventDefault());
+      document.addEventListener("gestureend", (e) => e.preventDefault());
     }
 
     // Teleport click remains for desktop; you might extend this for mobile tap jump if desired
