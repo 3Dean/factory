@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link href="vite.svg" rel="icon" type="image/svg+xml" />
+    <!-- Ensures proper scaling on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Factory Environment</title>
+  </head>
+  <body>
+    <!-- <div id="info">First Person Navigation with HDR Environment</div>-->
+    <div id="controls">
+      WASD - Move<br />
+      Mouse - Look<br />
+      Space - Jump<br />
+      Shift - Run<br />
+      Click - Teleport<br />
+      T - Toggle Navmesh
+    </div>
+    <div id="loading">Loading...</div>
+    <div id="crosshair">+</div>
+
+    <!-- Audio Controls UI -->
+    <div id="audio-controls">
+      <button id="play-pause">Play Music</button>
+      <input type="range" id="volume-slider" min="0" max="100" value="70" />
+      <div id="volume-label">Volume: 70%</div>
+      <div id="credits">
+        Music:
+        <a
+          href="https://freemusicarchive.org/music/Brylie_Christopher_Oxley/contact"
+          target="_blank"
+        >
+          "A Gentle Fog Descends" by Brylie Christopher Oxley</a
+        >
+        | CC BY 4.0
+      </div>
+    </div>
+    <!-- Mobile Instructions (visible only on mobile devices) -->
+    <div id="mobile-instructions">
+      Touch the <strong>left side</strong> to move,
+      <strong>right side</strong> to look,<br />
+      and <strong>tap</strong> to jump.
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
