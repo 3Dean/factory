@@ -4,7 +4,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { ColorManagement, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import nipplejs from 'nipplejs';
 
 // Wait for everything to load
 window.addEventListener("load", init);
@@ -657,6 +656,10 @@ function init() {
       // Initialize mobile touch controls
       setupMobileControls();
       // Optionally display mobile instructions (already in HTML/CSS)
+      // Prevent pinch-to-zoom and double-tap zoom
+      document.addEventListener("gesturestart", (e) => e.preventDefault());
+      document.addEventListener("gesturechange", (e) => e.preventDefault());
+      document.addEventListener("gestureend", (e) => e.preventDefault());
     }
 
     // Teleport click remains for desktop; you might extend this for mobile tap jump if desired
@@ -707,52 +710,57 @@ function init() {
     camera.rotation.copy(euler);
     playerDirection.set(0, 0, -1).applyQuaternion(camera.quaternion);
   }
+
   // Mobile touch controls for movement and camera rotation
-  // Add this function to setup virtual thumbsticks using nipple.js
   function setupMobileControls() {
-    const leftJoystick = nipplejs.create({
-      zone: document.getElementById('left-thumbstick'),
-      mode: 'static',
-      position: { left: '60px', bottom: '60px' },
-      color: 'white',
-      size: 100,
-      restOpacity: 0.4,
-    });
+    let leftTouchId = null, rightTouchId = null;
+    let leftStart = null, rightStart = null;
 
-    const rightJoystick = nipplejs.create({
-      zone: document.getElementById('right-thumbstick'),
-      mode: 'static',
-      position: { right: '60px', bottom: '60px' },
-      color: 'white',
-      size: 100,
-      restOpacity: 0.4,
-    });
+    window.addEventListener("touchstart", function(e) {
+      for (let touch of e.changedTouches) {
+        if (touch.clientX < window.innerWidth / 2 && leftTouchId === null) {
+          leftTouchId = touch.identifier;
+          leftStart = { x: touch.clientX, y: touch.clientY };
+        } else if (touch.clientX >= window.innerWidth / 2 && rightTouchId === null) {
+          rightTouchId = touch.identifier;
+          rightStart = { x: touch.clientX, y: touch.clientY };
+        }
+      }
+    }, false);
 
-    leftJoystick.on('move', function (evt, data) {
-      if (!data) return;
-      const angle = data.angle.degree;
-      keys.forward = angle > 45 && angle < 135;
-      keys.backward = angle > 225 && angle < 315;
-      keys.left = angle > 135 && angle < 225;
-      keys.right = angle < 45 || angle > 315;
-    });
+    window.addEventListener("touchmove", function(e) {
+      for (let touch of e.changedTouches) {
+        if (touch.identifier === leftTouchId) {
+          let deltaX = touch.clientX - leftStart.x;
+          let deltaY = touch.clientY - leftStart.y;
+          keys.forward = deltaY < -20;
+          keys.backward = deltaY > 20;
+          keys.left = deltaX < -20;
+          keys.right = deltaX > 20;
+        } else if (touch.identifier === rightTouchId) {
+          let deltaX = touch.clientX - rightStart.x;
+          let deltaY = touch.clientY - rightStart.y;
+          euler.y -= deltaX * 0.005;
+          euler.x -= deltaY * 0.005;
+          euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+          camera.rotation.copy(euler);
+          rightStart = { x: touch.clientX, y: touch.clientY };
+        }
+      }
+    }, false);
 
-    leftJoystick.on('end', function () {
-      keys.forward = keys.backward = keys.left = keys.right = false;
-    });
-
-    rightJoystick.on('move', function (evt, data) {
-      if (!data) return;
-      const force = data.force;
-      const angle = data.angle.radian;
-      lookDelta.x = Math.cos(angle) * force * 0.05;
-      lookDelta.y = Math.sin(angle) * force * 0.05;
-    });
-
-    rightJoystick.on('end', function () {
-      lookDelta.set(0, 0);
-    });
+    window.addEventListener("touchend", function(e) {
+      for (let touch of e.changedTouches) {
+        if (touch.identifier === leftTouchId) {
+          leftTouchId = null;
+          keys.forward = keys.backward = keys.left = keys.right = false;
+        } else if (touch.identifier === rightTouchId) {
+          rightTouchId = null;
+        }
+      }
+    }, false);
   }
+
   // Teleport functionality remains unchanged
   function setupTeleport() {
     const raycaster = new THREE.Raycaster();
@@ -878,10 +886,6 @@ function init() {
     updatePlayerMovement();
     scrollingTextures.forEach(tex => tex.offset.y += 0.0005);
     animategrass(time);
-    euler.y -= lookDelta.x;
-    euler.x -= lookDelta.y;
-    euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
-    camera.rotation.copy(euler);
 
    // === Color cycle each light ===
    pointLights.forEach((light, i) => {
