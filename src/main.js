@@ -17,6 +17,9 @@ function init() {
   let audioInitialized = false;
   let pointLights = [];
   let hues = [];
+  let particleSystem;
+  let analyser, audioDataArray;
+
 
   const playerHeight = 1.9;
   const playerRadius = 0.25;
@@ -60,8 +63,9 @@ function init() {
     // Use click (or touch) anywhere to initialize audio (browser requirement)
     window.addEventListener("touchstart", initializeAudioContext, { once: true });
     window.addEventListener("click", initializeAudioContext, { once: true });
+    
     // Pre-load the audio file
-    const audioUrl = "/audio/gentlefogdescends.mp3";
+    const audioUrl = "/audio/IliaqueNebula.mp3";
     console.log("Preloading audio from:", audioUrl);
     fetch(audioUrl)
       .then((response) => response.arrayBuffer())
@@ -81,6 +85,15 @@ function init() {
       gainNode = audioContext.createGain();
       gainNode.gain.value = volumeSlider.value / 100;
       gainNode.connect(audioContext.destination);
+      analyser = audioContext.createAnalyser();
+analyser.fftSize = 256; // Smaller = faster but less detailed
+const bufferLength = analyser.frequencyBinCount;
+audioDataArray = new Uint8Array(bufferLength);
+
+// Connect analyser to the audio chain
+gainNode.connect(analyser);
+analyser.connect(audioContext.destination);
+
       if (audioBuffer) {
         audioContext.decodeAudioData(audioBuffer)
           .then((decodedData) => {
@@ -177,9 +190,34 @@ function init() {
     ColorManagement.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Load environment map from EXR file
-    loadEnvironmentMap();
 
+    // Particle system
+    function addParticles() {
+      const particleCount = 5000;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+    
+      for (let i = 0; i < particleCount; i++) {
+        const x = THREE.MathUtils.randFloatSpread(200);
+        const y = THREE.MathUtils.randFloat(0, 100);
+        const z = THREE.MathUtils.randFloatSpread(200);
+        positions.set([x, y, z], i * 3);
+      }
+    
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+      const material = new THREE.PointsMaterial({
+        color: 0x00ffff,
+        size: 0.2,
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+    
+      particleSystem = new THREE.Points(geometry, material);
+      scene.add(particleSystem);
+    }
     // Lights and other scene setup (unchanged) ...
 
         const ambientLight = new THREE.AmbientLight(0xf7c6a1, 0.5); // Increased ambient intensity
@@ -317,11 +355,10 @@ function init() {
     });
   }
   
-  
-
-
     // Handle window resize
     window.addEventListener("resize", onWindowResize);
+    addParticles();
+    loadEnvironmentMap();
   }
 
   function onWindowResize() {
@@ -895,6 +932,30 @@ if (screen) {
     updatePlayerMovement();
     scrollingTextures.forEach(tex => tex.offset.y += 0.0005);
     animategrass(time);
+
+    if (particleSystem && analyser) {
+      analyser.getByteFrequencyData(audioDataArray);
+      
+      let avg = 0;
+      for (let i = 0; i < audioDataArray.length; i++) {
+        avg += audioDataArray[i];
+      }
+      avg /= audioDataArray.length;
+    
+      const pulse = avg / 256; // normalize to 0-1
+    
+      // Make particles float with pulse size
+      particleSystem.material.size = 0.1 + pulse * 0.4;
+      particleSystem.material.opacity = 0.3 + pulse * 0.5;
+    
+      // Add floaty motion
+      particleSystem.rotation.y += 0.0005 + pulse * 0.001;
+      particleSystem.position.y = Math.sin(time * 0.0003) * (0.5 + pulse);
+
+      particleSystem.material.needsUpdate = true;
+    }
+    
+
 
    // === Color cycle each light ===
    pointLights.forEach((light, i) => {
