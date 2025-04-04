@@ -1,7 +1,7 @@
 import './style.css'
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
+//import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { ColorManagement, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
 
 // Wait for everything to load
@@ -297,52 +297,27 @@ function init() {
             //pointLight.position.set(60, 5, 5);
                       
 
-  // Load environment map from EXR file
+  // Load environment map from Skybox file
   function loadEnvironmentMap() {
-    // Create a basic sky color as a fallback
-    scene.background = new THREE.Color(0x000000);
-
-    // Load the EXR file
-    const exrLoader = new EXRLoader();
-    const exrUrl = "/images/rogland_clear_night_1k.exr";
-    console.log("Loading EXR from:", exrUrl);
-
-    exrLoader.load(
-      exrUrl,
-      function (texture) {
-        console.log("EXR loaded successfully");
-
-        // Setup proper texture mapping
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-
-        // Using the built-in PMREMGenerator (no need for external script)
-        const pmremGenerator = new THREE.PMREMGenerator(renderer);
-        pmremGenerator.compileEquirectangularShader();
-
-        // Process the environment map for proper PBR lighting
-        const envMap =
-          pmremGenerator.fromEquirectangular(texture).texture;
-
-        // Apply to scene
-        scene.environment = envMap;
-        scene.background = envMap;
-
-        // Clean up resources
-        pmremGenerator.dispose();
-        texture.dispose();
-
-        console.log("Environment map processed and applied");
-      },
-      function (xhr) {
-        console.log(
-          "EXR loading: " + (xhr.loaded / xhr.total) * 100 + "%"
-        );
-      },
-      function (error) {
-        console.error("Error loading environment map:", error);
+    const textureLoader = new THREE.TextureLoader();
+    const texturePath = isMobile 
+      ? "/images/skybox2k.jpg"  // 2048x1024
+      : "/images/skybox8k.jpg"; // 4096x2048 or more
+  
+    textureLoader.load(texturePath, function (texture) {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      // Use environment on desktop only to avoid iOS crashing
+      if (!isMobile) {
+        scene.environment = texture;
       }
-    );
+      scene.background = texture;
+      console.log(`Loaded ${isMobile ? "mobile" : "desktop"} skybox`);
+    }, undefined, function (err) {
+      console.error("Failed to load skybox texture:", err);
+    });
   }
+  
+  
 
 
     // Handle window resize
