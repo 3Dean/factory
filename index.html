@@ -5,17 +5,15 @@
     <link href="vite.svg" rel="icon" type="image/svg+xml" />
     <!-- Ensures proper scaling on mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
     <title>Factory Environment</title>
   </head>
   <body>
-    <div id="controls">
-      WASD - Move<br />
-      Mouse - Look<br />
-      Space - Jump<br />
-      Shift - Run<br />
-      Click - Teleport<br />
-    </div>
     <div id="loading">Loading...</div>
+    <div id="crosshair">+</div>
 
     <!-- Audio Controls UI -->
     <div id="audio-controls">
@@ -33,13 +31,96 @@
         | CC BY 4.0
       </div>
     </div>
-    <!-- Mobile Instructions (visible only on mobile devices) -->
-    <div id="mobile-instructions">
-      Touch the <strong>left side</strong> to move,
-      <strong>right side</strong> to look.<br />
+    <!-- Desktop Tutorial -->
+    <div id="desktop-tutorial-overlay">
+      <div class="tutorial-box">
+        <h2>Welcome!</h2>
+        <p>
+          Use <strong>WASD</strong> to move,<br />
+          <strong>Mouse</strong> to look,<br />
+          <strong>Space</strong> to jump,<br />
+          and <strong>Shift</strong> to run!
+        </p>
+        <button id="close-desktop-tutorial">Got it!</button>
+      </div>
     </div>
-    <div id="left-thumbstick" class="thumbstick-zone"></div>
-    <div id="right-thumbstick" class="thumbstick-zone"></div>
+    <!-- Mobile Tutorial -->
+    <div id="tutorial-overlay">
+      <div class="tutorial-box">
+        <h2>Welcome!</h2>
+        <p>
+          Use the <strong>left</strong> stick to move,<br />
+          <strong>right</strong> stick to look,<br />
+          and tap <strong>Jump</strong> to hop!
+        </p>
+        <button id="close-tutorial">Got it!</button>
+      </div>
+    </div>
+
+    <!-- Thumbsticks -->
+    <div id="left-thumbstick" class="thumbstick-zone">
+      <i class="fa-solid fa-person-walking"></i>
+    </div>
+    <button id="jump-button" class="mobile-button">
+      <i class="fa-solid fa-person-arrow-up-from-line"></i>
+    </button>
+    <div id="right-thumbstick" class="thumbstick-zone">
+      <i class="fa-solid fa-street-view"></i>
+    </div>
+
+    <!-- Desktop Tutorial Script -->
+    <script>
+      localStorage.removeItem("tutorialSeen"); // <-- REMOVE THIS LINE WHEN DONE TESTING
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const overlay = document.getElementById("tutorial-overlay");
+        const closeBtn = document.getElementById("close-tutorial");
+
+        if (
+          isMobile &&
+          overlay &&
+          closeBtn &&
+          !localStorage.getItem("tutorialSeen")
+        ) {
+          overlay.classList.add("visible");
+
+          closeBtn.addEventListener("click", () => {
+            overlay.classList.remove("visible");
+            localStorage.setItem("tutorialSeen", "true");
+          });
+        }
+      });
+    </script>
+
+    <!-- Desktop Tutorial Script -->
+    <script>
+      localStorage.removeItem("desktopTutorialSeen");
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+        // Desktop tutorial logic
+        const desktopOverlay = document.getElementById(
+          "desktop-tutorial-overlay"
+        );
+        const closeDesktop = document.getElementById("close-desktop-tutorial");
+
+        if (
+          !isMobile &&
+          desktopOverlay &&
+          closeDesktop &&
+          !localStorage.getItem("desktopTutorialSeen")
+        ) {
+          desktopOverlay.classList.add("visible");
+
+          closeDesktop.addEventListener("click", () => {
+            desktopOverlay.classList.remove("visible");
+            localStorage.setItem("desktopTutorialSeen", "true");
+          });
+        }
+      });
+    </script>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { ColorManagement, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
-import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 // Wait for everything to load
 window.addEventListener("load", init);
@@ -16,7 +15,6 @@ function init() {
   let audioBuffer,
     audioIsPlaying = false;
   let audioInitialized = false;
-  let stats;
   let pointLights = [];
   let hues = [];
 
@@ -60,7 +58,8 @@ function init() {
   // Setup audio system
   function setupAudio() {
     // Use click (or touch) anywhere to initialize audio (browser requirement)
-    document.addEventListener("click", initializeAudioContext, { once: true });
+    window.addEventListener("touchstart", initializeAudioContext, { once: true });
+    window.addEventListener("click", initializeAudioContext, { once: true });
     // Pre-load the audio file
     const audioUrl = "/audio/gentlefogdescends.mp3";
     console.log("Preloading audio from:", audioUrl);
@@ -171,11 +170,6 @@ function init() {
     renderer.toneMappingExposure = .2;
     renderer.outputColorSpace = SRGBColorSpace;
     ColorManagement.enabled = true;
-    stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
-    document.body.appendChild(stats.domElement);
     document.body.appendChild(renderer.domElement);
 
     // Load environment map from EXR file
@@ -660,6 +654,20 @@ function init() {
       document.addEventListener("gesturestart", (e) => e.preventDefault());
       document.addEventListener("gesturechange", (e) => e.preventDefault());
       document.addEventListener("gestureend", (e) => e.preventDefault());
+      const jumpButton = document.getElementById("jump-button");
+      // Mobile Jump Button
+      if (jumpButton) {
+          jumpButton.addEventListener("touchstart", () => {
+        if (isOnGround) {
+          verticalVelocity = jumpForce;
+          isOnGround = false;
+          // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+          }
+        });
+      }
     }
 
     // Teleport click remains for desktop; you might extend this for mobile tap jump if desired
@@ -882,7 +890,6 @@ function init() {
 
   function animate(time) {
     requestAnimationFrame(animate);
-    stats.begin();
     updatePlayerMovement();
     scrollingTextures.forEach(tex => tex.offset.y += 0.0005);
     animategrass(time);
@@ -894,7 +901,6 @@ function init() {
     light.color.setHSL(hues[i], 1, 0.5);
 });
     renderer.render(scene, camera);
-    stats.end();
   }
 
   function start() {
@@ -903,6 +909,17 @@ function init() {
     loadModels();
     setTimeout(() => { /* Fix shadow artifacts */ }, 2000);
     requestAnimationFrame(animate);
+    // Tutorial Overlay
+  if (isMobile) {
+    if (!localStorage.getItem("tutorialSeen")) {
+      document.getElementById("tutorial-overlay").style.display = "flex";
+      document.getElementById("close-tutorial").addEventListener("click", () => {
+        document.getElementById("tutorial-overlay").style.display = "none";
+        localStorage.setItem("tutorialSeen", "true");
+      });
+    }
+  }
+
   }
 
   start();
