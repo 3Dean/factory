@@ -18,6 +18,7 @@
         <div id="loader-text">Loading... 0%</div>
       </div>
     </div>
+
     <div id="crosshair">+</div>
 
     <!-- Audio Controls UI -->
@@ -27,7 +28,10 @@
       <div id="volume-label">Volume: 70%</div>
       <div id="credits">
         Music:
-        <a href="https://freemusicarchive.org/music/Iliaque/" target="_blank">
+        <a
+          href="https://freemusicarchive.org/music/Brylie_Christopher_Oxley/contact"
+          target="_blank"
+        >
           "A Gentle Fog Descends" by Brylie Christopher Oxley</a
         >
         | CC BY 4.0
@@ -70,9 +74,9 @@
       <i class="fa-solid fa-street-view"></i>
     </div>
 
-    <!-- Desktop Tutorial Script -->
+    <!-- Desktop Tutorial Script 
     <script>
-      localStorage.removeItem("tutorialSeen"); // <-- REMOVE THIS LINE WHEN DONE TESTING
+      
 
       window.addEventListener("DOMContentLoaded", () => {
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -93,7 +97,7 @@
           });
         }
       });
-    </script>
+    </script>-->
 
     <!-- Desktop Tutorial Script -->
     <script>
@@ -123,7 +127,9 @@
         }
       });
     </script>
-
+    <script>
+      localStorage.removeItem("tutorialSeen"); // <-- REMOVE THIS LINE WHEN DONE TESTING
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

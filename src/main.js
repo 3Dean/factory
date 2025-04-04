@@ -1,6 +1,7 @@
 import './style.css'
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { ColorManagement, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
 
 // Wait for everything to load
@@ -16,9 +17,6 @@ function init() {
   let audioInitialized = false;
   let pointLights = [];
   let hues = [];
-  let particleSystem;
-  let analyser, audioDataArray;
-
 
   const playerHeight = 1.9;
   const playerRadius = 0.25;
@@ -63,7 +61,7 @@ function init() {
     window.addEventListener("touchstart", initializeAudioContext, { once: true });
     window.addEventListener("click", initializeAudioContext, { once: true });
     // Pre-load the audio file
-    const audioUrl = "/audio/IliaqueNebula.mp3";
+    const audioUrl = "/audio/gentlefogdescends.mp3";
     console.log("Preloading audio from:", audioUrl);
     fetch(audioUrl)
       .then((response) => response.arrayBuffer())
@@ -83,15 +81,6 @@ function init() {
       gainNode = audioContext.createGain();
       gainNode.gain.value = volumeSlider.value / 100;
       gainNode.connect(audioContext.destination);
-      analyser = audioContext.createAnalyser();
-analyser.fftSize = 256; // Smaller = faster but less detailed
-const bufferLength = analyser.frequencyBinCount;
-audioDataArray = new Uint8Array(bufferLength);
-
-// Connect analyser to the audio chain
-gainNode.connect(analyser);
-analyser.connect(audioContext.destination);
-
       if (audioBuffer) {
         audioContext.decodeAudioData(audioBuffer)
           .then((decodedData) => {
@@ -188,35 +177,8 @@ analyser.connect(audioContext.destination);
     ColorManagement.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Load environment map
+    // Load environment map from EXR file
     loadEnvironmentMap();
-
-    function addParticles() {
-      const particleCount = 3000;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(particleCount * 3);
-    
-      for (let i = 0; i < particleCount; i++) {
-        const x = THREE.MathUtils.randFloatSpread(200);
-        const y = THREE.MathUtils.randFloat(0, 100);
-        const z = THREE.MathUtils.randFloatSpread(200);
-        positions.set([x, y, z], i * 3);
-      }
-    
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    
-      const material = new THREE.PointsMaterial({
-        color: 0x00ffff,
-        size: 0.1,
-        transparent: true,
-        opacity: 0.25,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-    
-      particleSystem = new THREE.Points(geometry, material);
-      scene.add(particleSystem);
-    }
 
     // Lights and other scene setup (unchanged) ...
 
@@ -335,30 +297,57 @@ analyser.connect(audioContext.destination);
             //pointLight.position.set(60, 5, 5);
                       
 
-  // Load environment map from Skybox AI
+  // Load environment map from EXR file
   function loadEnvironmentMap() {
-    // Load equirectangular background image (e.g., from Skybox AI)
-    const textureLoader = new THREE.TextureLoader();
-    const envUrl = '/images/skybox.jpg'; // 🔁 Change this path to your actual image location
-  
-    textureLoader.load(envUrl, function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      scene.background = texture;
-      scene.environment = texture;
-  
-      console.log("Equirectangular environment map applied");
-    },
-    undefined,
-    function (err) {
-      console.error("Error loading background texture:", err);
-    });
+    // Create a basic sky color as a fallback
+    scene.background = new THREE.Color(0x000000);
+
+    // Load the EXR file
+    const exrLoader = new EXRLoader();
+    const exrUrl = "/images/rogland_clear_night_1k.exr";
+    console.log("Loading EXR from:", exrUrl);
+
+    exrLoader.load(
+      exrUrl,
+      function (texture) {
+        console.log("EXR loaded successfully");
+
+        // Setup proper texture mapping
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+
+        // Using the built-in PMREMGenerator (no need for external script)
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+
+        // Process the environment map for proper PBR lighting
+        const envMap =
+          pmremGenerator.fromEquirectangular(texture).texture;
+
+        // Apply to scene
+        scene.environment = envMap;
+        scene.background = envMap;
+
+        // Clean up resources
+        pmremGenerator.dispose();
+        texture.dispose();
+
+        console.log("Environment map processed and applied");
+      },
+      function (xhr) {
+        console.log(
+          "EXR loading: " + (xhr.loaded / xhr.total) * 100 + "%"
+        );
+      },
+      function (error) {
+        console.error("Error loading environment map:", error);
+      }
+    );
   }
-  
+
 
     // Handle window resize
     window.addEventListener("resize", onWindowResize);
-    addParticles();
-   }
+  }
 
   function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -606,7 +595,29 @@ analyser.connect(audioContext.destination);
       );
     });
     loadingManager.onLoad = function () {
-      document.getElementById("loading-screen").style.display = "none";
+      const screen = document.getElementById("loading-screen");
+if (screen) {
+  screen.style.opacity = "0";
+  setTimeout(() => {
+    screen.style.display = "none";
+
+ if (isMobile && !localStorage.getItem("tutorialSeen")) {
+        const overlay = document.getElementById("tutorial-overlay");
+        const closeBtn = document.getElementById("close-tutorial");
+
+        if (overlay && closeBtn) {
+          overlay.classList.add("visible");
+
+          closeBtn.addEventListener("click", () => {
+            overlay.classList.remove("visible");
+            localStorage.setItem("tutorialSeen", "true");
+          });
+        }
+      }
+
+    }, 1000);
+  }
+
       if (audioBuffer && !audioIsPlaying) {
         playPauseButton.style.backgroundColor = "rgba(80, 200, 120, 0.3)";
         setTimeout(() => {
@@ -916,32 +927,7 @@ analyser.connect(audioContext.destination);
     if (hues[i] > 1) hues[i] = 0;
     light.color.setHSL(hues[i], 1, 0.5);
 });
-if (particleSystem && analyser) {
-  analyser.getByteFrequencyData(audioDataArray);
-
-  // Calculate average volume
-  let avg = 0;
-  for (let i = 0; i < audioDataArray.length; i++) {
-    avg += audioDataArray[i];
-  }
-  avg /= audioDataArray.length;
-
-  // Normalize to range 0–1
-  const pulse = avg / 256;
-
-  // 💥 Visibly reactive changes
-  particleSystem.material.size = 0.12 + pulse * .5;
-  particleSystem.material.opacity = 0.3 + pulse * 0.4;
-  particleSystem.material.color.setHSL(pulse, 1.0, 0.6);
-
-  // Optional motion
-  particleSystem.rotation.y += 0.0005 + pulse * 0.003;
-  particleSystem.position.y = Math.sin(performance.now() * 0.001) * (0.5 + pulse * 0.5);
-  
-  particleSystem.material.needsUpdate = true;
-}
-
-  renderer.render(scene, camera);
+    renderer.render(scene, camera);
   }
 
   function start() {
