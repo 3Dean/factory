@@ -12,7 +12,13 @@
     <title>Factory Environment</title>
   </head>
   <body>
-    <div id="loading">Loading...</div>
+    <div id="loading-screen">
+      <div id="loader-glow">
+        <div id="loader-spinner"></div>
+        <div id="loader-text">Loading... 0%</div>
+      </div>
+    </div>
+
     <div id="crosshair">+</div>
 
     <!-- Audio Controls UI -->
@@ -68,9 +74,9 @@
       <i class="fa-solid fa-street-view"></i>
     </div>
 
-    <!-- Desktop Tutorial Script -->
+    <!-- Desktop Tutorial Script 
     <script>
-      localStorage.removeItem("tutorialSeen"); // <-- REMOVE THIS LINE WHEN DONE TESTING
+      
 
       window.addEventListener("DOMContentLoaded", () => {
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -91,7 +97,7 @@
           });
         }
       });
-    </script>
+    </script>-->
 
     <!-- Desktop Tutorial Script -->
     <script>
@@ -121,7 +127,9 @@
         }
       });
     </script>
-
+    <script>
+      localStorage.removeItem("tutorialSeen"); // <-- REMOVE THIS LINE WHEN DONE TESTING
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

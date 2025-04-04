@@ -129,18 +129,23 @@ function init() {
 
   const loadingManager = new THREE.LoadingManager(
     function () {
-      console.log("All models loaded successfully");
-      document.getElementById("loading").style.display = "none";
+      console.log("All models loaded!");
+      const screen = document.getElementById("loading-screen");
+      if (screen) {
+        screen.style.opacity = "0";
+        setTimeout(() => screen.style.display = "none", 1000);
+      }
     },
     function (url, itemsLoaded, itemsTotal) {
       const progress = Math.round((itemsLoaded / itemsTotal) * 100);
-      console.log(`Loading: ${progress}% (${itemsLoaded}/${itemsTotal})`);
-      document.getElementById("loading").textContent = `Loading... ${progress}%`;
+      const text = document.getElementById("loader-text");
+      if (text) text.textContent = `Loading... ${progress}%`;
     },
     function (url) {
       console.error("Error loading:", url);
     }
   );
+  
 
   // Player movement state
   const keys = {
@@ -590,7 +595,29 @@ function init() {
       );
     });
     loadingManager.onLoad = function () {
-      document.getElementById("loading").style.display = "none";
+      const screen = document.getElementById("loading-screen");
+if (screen) {
+  screen.style.opacity = "0";
+  setTimeout(() => {
+    screen.style.display = "none";
+
+ if (isMobile && !localStorage.getItem("tutorialSeen")) {
+        const overlay = document.getElementById("tutorial-overlay");
+        const closeBtn = document.getElementById("close-tutorial");
+
+        if (overlay && closeBtn) {
+          overlay.classList.add("visible");
+
+          closeBtn.addEventListener("click", () => {
+            overlay.classList.remove("visible");
+            localStorage.setItem("tutorialSeen", "true");
+          });
+        }
+      }
+
+    }, 1000);
+  }
+
       if (audioBuffer && !audioIsPlaying) {
         playPauseButton.style.backgroundColor = "rgba(80, 200, 120, 0.3)";
         setTimeout(() => {
