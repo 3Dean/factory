@@ -189,31 +189,46 @@ analyser.connect(audioContext.destination);
     document.body.appendChild(renderer.domElement);
 
     function addParticles() {
-      const particleCount = 3000;
+      const particleCount = 2000;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
     
       for (let i = 0; i < particleCount; i++) {
-        const x = THREE.MathUtils.randFloatSpread(200);
-        const y = THREE.MathUtils.randFloat(0, 100);
-        const z = THREE.MathUtils.randFloatSpread(200);
+        const x = THREE.MathUtils.randFloatSpread(300);
+        const y = THREE.MathUtils.randFloat(0, 300);
+        const z = THREE.MathUtils.randFloatSpread(300);
         positions.set([x, y, z], i * 3);
       }
     
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     
-      const material = new THREE.PointsMaterial({
-        color: 0x00ffff,
-        size: 0.1,
-        transparent: true,
-        opacity: 0.25,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.load('/images/dustball.png', (glowTexture) => {
+        glowTexture.colorSpace = THREE.SRGBColorSpace; // optional: keeps colors true
+        glowTexture.needsUpdate = true;
     
-      particleSystem = new THREE.Points(geometry, material);
-      scene.add(particleSystem);
+        const material = new THREE.PointsMaterial({
+          map: glowTexture,
+          color: 0xffffff,
+          size: .1, // adjust this to make them larger/smaller
+          transparent: true,
+          alphaTest: 0.1,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          sizeAttenuation: true
+        });
+    
+        particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
+        console.log("✨ Glowing square particles initialized!");
+      },
+      undefined,
+      (err) => {
+        console.error("🚨 Error loading texture: /images/dustball.png", err);
+      }    
+    );
     }
+    
 
     // Lights and other scene setup (unchanged) ...
 
@@ -913,27 +928,28 @@ function loadEnvironmentMap() {
 if (particleSystem && analyser) {
   analyser.getByteFrequencyData(audioDataArray);
 
-  // Calculate average volume
   let avg = 0;
   for (let i = 0; i < audioDataArray.length; i++) {
     avg += audioDataArray[i];
   }
   avg /= audioDataArray.length;
-
-  // Normalize to range 0–1
   const pulse = avg / 256;
 
-  // 💥 Visibly reactive changes
-  particleSystem.material.size = 0.12 + pulse * .5;
-  particleSystem.material.opacity = 0.3 + pulse * 0.4;
-  particleSystem.material.color.setHSL(pulse, 1.0, 0.6);
+  // 🧪 Log what's going on
+  console.log("Pulse:", pulse.toFixed(2), 
+              "Size:", particleSystem.material.size.toFixed(2), 
+              "Opacity:", particleSystem.material.opacity.toFixed(2));
 
-  // Optional motion
+  particleSystem.material.size = .5 + pulse * 1;
+  particleSystem.material.opacity = .5 + pulse * 0.4;
+  particleSystem.material.color.setHSL(pulse, 1.0, 1.0);
+
   particleSystem.rotation.y += 0.0005 + pulse * 0.003;
   particleSystem.position.y = Math.sin(performance.now() * 0.001) * (0.5 + pulse * 0.5);
-  
+
   particleSystem.material.needsUpdate = true;
 }
+
 
   renderer.render(scene, camera);
   }
