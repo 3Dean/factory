@@ -1,7 +1,6 @@
 import './style.css'
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-//import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { ColorManagement, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
 
 // Wait for everything to load
@@ -63,7 +62,6 @@ function init() {
     // Use click (or touch) anywhere to initialize audio (browser requirement)
     window.addEventListener("touchstart", initializeAudioContext, { once: true });
     window.addEventListener("click", initializeAudioContext, { once: true });
-    
     // Pre-load the audio file
     const audioUrl = "/audio/IliaqueNebula.mp3";
     console.log("Preloading audio from:", audioUrl);
@@ -190,10 +188,8 @@ analyser.connect(audioContext.destination);
     ColorManagement.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-
-    // Particle system
     function addParticles() {
-      const particleCount = 5000;
+      const particleCount = 3000;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
     
@@ -208,9 +204,9 @@ analyser.connect(audioContext.destination);
     
       const material = new THREE.PointsMaterial({
         color: 0x00ffff,
-        size: 0.2,
+        size: 0.1,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.25,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -218,6 +214,7 @@ analyser.connect(audioContext.destination);
       particleSystem = new THREE.Points(geometry, material);
       scene.add(particleSystem);
     }
+
     // Lights and other scene setup (unchanged) ...
 
         const ambientLight = new THREE.AmbientLight(0xf7c6a1, 0.5); // Increased ambient intensity
@@ -330,36 +327,32 @@ analyser.connect(audioContext.destination);
             pointLights.push(light);
             hues.push(Math.random()); // optional: gives each light a different starting color
         });
-            
-            // Position it
-            //pointLight.position.set(60, 5, 5);
-                      
 
-  // Load environment map from Skybox file
-  function loadEnvironmentMap() {
-    const textureLoader = new THREE.TextureLoader();
-    const texturePath = isMobile 
-      ? "/images/skybox2k.jpg"  // 2048x1024
-      : "/images/skybox8k.jpg"; // 4096x2048 or more
-  
-    textureLoader.load(texturePath, function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      // Use environment on desktop only to avoid iOS crashing
-      if (!isMobile) {
-        scene.environment = texture;
-      }
-      scene.background = texture;
-      console.log(`Loaded ${isMobile ? "mobile" : "desktop"} skybox`);
-    }, undefined, function (err) {
-      console.error("Failed to load skybox texture:", err);
-    });
-  }
-  
+// Load environment map from Skybox file
+function loadEnvironmentMap() {
+  const textureLoader = new THREE.TextureLoader();
+  const texturePath = isMobile 
+    ? "/images/skybox2k.jpg"  // 2048x1024
+    : "/images/skybox8k.jpg"; // 4096x2048 or more
+
+  textureLoader.load(texturePath, function (texture) {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    // Use environment on desktop only to avoid iOS crashing
+    if (!isMobile) {
+      scene.environment = texture;
+    }
+    scene.background = texture;
+    console.log(`Loaded ${isMobile ? "mobile" : "desktop"} skybox`);
+  }, undefined, function (err) {
+    console.error("Failed to load skybox texture:", err);
+  });
+}
+
     // Handle window resize
     window.addEventListener("resize", onWindowResize);
-    addParticles();
     loadEnvironmentMap();
-  }
+    addParticles();
+   }
 
   function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -607,29 +600,7 @@ analyser.connect(audioContext.destination);
       );
     });
     loadingManager.onLoad = function () {
-      const screen = document.getElementById("loading-screen");
-if (screen) {
-  screen.style.opacity = "0";
-  setTimeout(() => {
-    screen.style.display = "none";
-
- if (isMobile && !localStorage.getItem("tutorialSeen")) {
-        const overlay = document.getElementById("tutorial-overlay");
-        const closeBtn = document.getElementById("close-tutorial");
-
-        if (overlay && closeBtn) {
-          overlay.classList.add("visible");
-
-          closeBtn.addEventListener("click", () => {
-            overlay.classList.remove("visible");
-            localStorage.setItem("tutorialSeen", "true");
-          });
-        }
-      }
-
-    }, 1000);
-  }
-
+      document.getElementById("loading-screen").style.display = "none";
       if (audioBuffer && !audioIsPlaying) {
         playPauseButton.style.backgroundColor = "rgba(80, 200, 120, 0.3)";
         setTimeout(() => {
@@ -933,37 +904,38 @@ if (screen) {
     scrollingTextures.forEach(tex => tex.offset.y += 0.0005);
     animategrass(time);
 
-    if (particleSystem && analyser) {
-      analyser.getByteFrequencyData(audioDataArray);
-      
-      let avg = 0;
-      for (let i = 0; i < audioDataArray.length; i++) {
-        avg += audioDataArray[i];
-      }
-      avg /= audioDataArray.length;
-    
-      const pulse = avg / 256; // normalize to 0-1
-    
-      // Make particles float with pulse size
-      particleSystem.material.size = 0.1 + pulse * 0.4;
-      particleSystem.material.opacity = 0.3 + pulse * 0.5;
-    
-      // Add floaty motion
-      particleSystem.rotation.y += 0.0005 + pulse * 0.001;
-      particleSystem.position.y = Math.sin(time * 0.0003) * (0.5 + pulse);
-
-      particleSystem.material.needsUpdate = true;
-    }
-    
-
-
    // === Color cycle each light ===
    pointLights.forEach((light, i) => {
     hues[i] += 0.001; // control speed here
     if (hues[i] > 1) hues[i] = 0;
     light.color.setHSL(hues[i], 1, 0.5);
 });
-    renderer.render(scene, camera);
+if (particleSystem && analyser) {
+  analyser.getByteFrequencyData(audioDataArray);
+
+  // Calculate average volume
+  let avg = 0;
+  for (let i = 0; i < audioDataArray.length; i++) {
+    avg += audioDataArray[i];
+  }
+  avg /= audioDataArray.length;
+
+  // Normalize to range 0–1
+  const pulse = avg / 256;
+
+  // 💥 Visibly reactive changes
+  particleSystem.material.size = 0.12 + pulse * .5;
+  particleSystem.material.opacity = 0.3 + pulse * 0.4;
+  particleSystem.material.color.setHSL(pulse, 1.0, 0.6);
+
+  // Optional motion
+  particleSystem.rotation.y += 0.0005 + pulse * 0.003;
+  particleSystem.position.y = Math.sin(performance.now() * 0.001) * (0.5 + pulse * 0.5);
+  
+  particleSystem.material.needsUpdate = true;
+}
+
+  renderer.render(scene, camera);
   }
 
   function start() {
